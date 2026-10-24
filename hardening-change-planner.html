@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows Server Hardening Change Planner | Dinesh</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; color: #e8f0f6; background: #0b1520; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1440px, calc(100% - 36px)); margin: 0 auto; }
+    header { border-bottom: 1px solid #263b48; background: linear-gradient(125deg, #102638, #0b1520 72%); }
+    .header-inner { padding: 38px 0 32px; }
+    .topline { display: flex; gap: 12px; align-items: center; color: #8fd9c7; font-size: .78rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #71ddbc; box-shadow: 0 0 18px #71ddbc; }
+    h1 { max-width: 950px; margin: 15px 0 10px; font-size: clamp(2.1rem, 5vw, 4.2rem); line-height: 1.05; letter-spacing: -.045em; }
+    header p { max-width: 840px; margin: 0; color: #aec3ce; line-height: 1.55; }
+    .facts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .pill { padding: 7px 11px; border: 1px solid #31515a; border-radius: 999px; color: #bee5dc; font-size: .8rem; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr); align-items: start; gap: 24px; padding: 30px 0 70px; }
+    .stack { display: grid; gap: 20px; }
+    section.card, .preview { border: 1px solid #29404d; border-radius: 18px; background: #122330; box-shadow: 0 16px 48px #07101944; }
+    section.card { padding: 24px; }
+    .section-head { display: flex; gap: 14px; align-items: start; margin-bottom: 19px; }
+    .step { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; background: #1a4d51; color: #b8f7e2; font-size: .82rem; font-weight: 800; }
+    h2 { margin: 1px 0 5px; font-size: 1.2rem; }
+    .section-head p, .muted { margin: 0; color: #97adbb; font-size: .89rem; line-height: 1.5; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: grid; gap: 7px; min-width: 0; }
+    .full { grid-column: 1 / -1; }
+    label { color: #d5e7ed; font-size: .82rem; font-weight: 650; }
+    input, select, textarea { width: 100%; padding: 11px 12px; border: 1px solid #375362; border-radius: 10px; outline: none; color: #e8f0f6; background: #0d1c28; }
+    input:focus, select:focus, textarea:focus { border-color: #65d5b2; box-shadow: 0 0 0 3px #65d5b222; }
+    textarea { min-height: 83px; resize: vertical; line-height: 1.45; }
+    select option { background: #0d1c28; }
+    .hint { margin: 0; color: #8ea7b4; font-size: .75rem; line-height: 1.4; }
+    .finding { padding: 18px; border: 1px solid #315160; border-radius: 14px; background: #0e1f2b; }
+    .finding + .finding { margin-top: 14px; }
+    .finding-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    .finding-title { color: #aee9da; font-size: .88rem; font-weight: 800; }
+    .link-button { padding: 5px 2px; border: 0; color: #a9c3ce; background: transparent; font-size: .81rem; }
+    .link-button:hover { color: #f5b9b5; }
+    .add { margin-top: 14px; padding: 10px 14px; border: 1px dashed #67a99e; border-radius: 10px; color: #b9efe1; background: #173a3c; font-weight: 700; }
+    .add:hover { background: #20504e; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .primary, .secondary { padding: 12px 17px; border-radius: 11px; font-weight: 750; }
+    .primary { border: 1px solid #7fe1be; color: #092022; background: #87e6c4; }
+    .primary:hover { background: #b0f5dc; }
+    .secondary { border: 1px solid #41606b; color: #dbeaf0; background: #1b3440; }
+    .secondary:hover { background: #274653; }
+    .preview { position: sticky; top: 20px; overflow: hidden; }
+    .preview-head { padding: 24px 24px 18px; border-bottom: 1px solid #29404d; }
+    .preview-head h2 { margin-bottom: 7px; }
+    .status { display: inline-block; margin-top: 12px; padding: 7px 11px; border-radius: 8px; color: #ffe3a7; background: #4b371b; font-size: .78rem; font-weight: 750; }
+    .status.ready { color: #baf3df; background: #1d4a3e; }
+    .preview-body { padding: 20px 24px 24px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { padding: 8px 10px; border: 1px solid #375362; border-radius: 8px; color: #bad0d9; background: #142936; font-size: .82rem; }
+    .tab.active { border-color: #74d6b9; color: #0c2428; background: #8de6c7; font-weight: 700; }
+    .output { width: 100%; min-height: 430px; max-height: 65vh; padding: 16px; border: 1px solid #35515e; border-radius: 10px; color: #d8e6eb; background: #0a1923; font: .8rem/1.55 Consolas, "Courier New", monospace; white-space: pre-wrap; overflow: auto; }
+    .preview-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
+    .sources { padding: 0 24px 22px; color: #8ea7b4; font-size: .75rem; line-height: 1.5; }
+    .sources a { color: #9fe5d4; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .preview { position: static; } }
+    @media (max-width: 650px) { .shell { width: min(100% - 24px, 1440px); } .fields { grid-template-columns: 1fr; } section.card, .preview-head, .preview-body { padding: 18px; } .sources { padding: 0 18px 18px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell header-inner">
+      <div class="topline"><span class="dot"></span> Dinesh · systems operations</div>
+      <h1>Windows Server hardening change planner</h1>
+      <p>Turn verified findings into an implementation plan, a backout plan, and a ServiceNow-ready change draft. This tool works locally in your browser and makes no server changes.</p>
+      <div class="facts"><span class="pill">Windows Server 2022</span><span class="pill">Domain controller aware</span><span class="pill">Review before execution</span><span class="pill">No external dependencies</span></div>
+    </div>
+  </header>
+
+  <main class="shell layout">
+    <div class="stack">
+      <section class="card" aria-labelledby="scope-heading">
+        <div class="section-head"><span class="step">01</span><div><h2 id="scope-heading">Scope and ownership</h2><p>Identify the exact targets and the source of the security requirements.</p></div></div>
+        <div class="fields">
+          <div class="field full"><label for="title">Change title</label><input id="title" value="Windows Server 2022 hardening" maxlength="160"></div>
+          <div class="field"><label for="targets">Affected CIs / servers</label><input id="targets" autocomplete="off"><p class="hint">Enter exact names, separated by commas.</p></div>
+          <div class="field"><label for="role">Server role</label><select id="role"><option value="">Select role</option><option>Domain Controller</option><option>Member Server</option><option>Other</option></select></div>
+          <div class="field"><label for="ipAddresses">Server IP address(es)</label><input id="ipAddresses" spellcheck="false" autocomplete="off"><p class="hint">For multiple servers, use server: IP pairs separated by commas.</p></div>
+          <div class="field"><label for="environment">Environment</label><select id="environment"><option value="">Select environment</option><option>Production</option><option>Pre-production</option><option>Test</option></select></div>
+          <div class="field"><label for="method">Change method</label><select id="method"><option value="">Select method</option><option>Group Policy</option><option>Local policy / configuration</option><option>Configuration management</option><option>Mixed / other</option></select></div>
+          <div class="field"><label for="baseline">Baseline source</label><input id="baseline" value="Microsoft Windows Server 2022 security baseline" maxlength="180"></div>
+          <div class="field"><label for="baselineVersion">Baseline version / reference</label><input id="baselineVersion" maxlength="180"><p class="hint">Record the exact release, document, or internal policy version used.</p></div>
+          <div class="field"><label for="owner">Implementation owner</label><input id="owner" value="Dinesh" maxlength="120"></div>
+          <div class="field"><label for="approver">Approver / CAB reference</label><input id="approver" maxlength="160"></div>
+          <div class="field"><label for="window">Change window (include timezone)</label><input id="window" maxlength="160"><p class="hint">Use the approved maintenance window, such as a date and time in MYT.</p></div>
+          <div class="field"><label for="pilot">Pilot target or test group</label><input id="pilot" maxlength="160"></div>
+          <div class="field"><label for="riskLevel">Change risk</label><select id="riskLevel"><option value="">Select risk</option><option>Low</option><option>Moderate</option><option>High</option><option>Critical</option></select></div>
+          <div class="field"><label for="businessImpact">Expected business impact</label><input id="businessImpact" maxlength="240"></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="evidence-heading">
+        <div class="section-head"><span class="step">02</span><div><h2 id="evidence-heading">Operational safeguards</h2><p>Capture the state and recovery path before scheduling a hardening change.</p></div></div>
+        <div class="fields">
+          <div class="field full"><label for="health">Current health and application checks</label><textarea id="health"></textarea></div>
+          <div class="field full"><label for="backup">Backup or configuration export evidence</label><textarea id="backup"></textarea><p class="hint">For Group Policy, identify the relevant GPO backup. For other methods, identify the supported recovery artifact.</p></div>
+          <div class="field full"><label for="dependencies">Application, access, and service dependencies</label><textarea id="dependencies"></textarea></div>
+          <div class="field full"><label for="rollbackTrigger">Backout trigger and decision owner</label><textarea id="rollbackTrigger"></textarea></div>
+          <div class="field full"><label for="success">Success criteria</label><textarea id="success"></textarea></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="findings-heading">
+        <div class="section-head"><span class="step">03</span><div><h2 id="findings-heading">Verified findings</h2><p>Add one row per control. Use measured evidence and your approved target value.</p></div></div>
+        <div id="findings"></div>
+        <button class="add" id="addFinding" type="button">+ Add finding</button>
+      </section>
+
+      <div class="actions"><button class="primary" id="generate" type="button">Generate drafts</button><button class="secondary" id="clear" type="button">Clear inputs</button></div>
+    </div>
+
+    <aside class="preview" aria-labelledby="preview-heading">
+      <div class="preview-head"><h2 id="preview-heading">Reviewable output</h2><p class="muted">Drafts use only the details you enter. Missing items remain visible.</p><span class="status" id="status">No draft generated</span></div>
+      <div class="preview-body">
+        <div class="tabs" role="tablist" aria-label="Draft type"><button class="tab active" role="tab" aria-selected="true" id="planTab" type="button">Change plan</button><button class="tab" role="tab" aria-selected="false" id="snowTab" type="button">ServiceNow draft</button></div>
+        <pre class="output" id="output" aria-live="polite">Enter the target, baseline reference, operational safeguards, and verified findings. Then select Generate drafts.</pre>
+        <div class="preview-actions"><button class="secondary" id="copy" type="button">Copy current draft</button><button class="secondary" id="download" type="button">Download Markdown</button></div>
+        <span class="sr-only" id="notice" aria-live="polite"></span>
+      </div>
+      <div class="sources">Planning reference: <a href="https://learn.microsoft.com/en-us/windows/security/operating-system-security/device-management/windows-security-configuration-framework/security-compliance-toolkit-10" target="_blank" rel="noopener noreferrer">Microsoft Security Compliance Toolkit</a> · <a href="https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/securing-domain-controllers-against-attack" target="_blank" rel="noopener noreferrer">Domain controller security guidance</a>. Confirm your organization’s approved baseline and change process before use.</div>
+    </aside>
+  </main>
+
+  <script>
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const fields = ["title", "targets", "role", "ipAddresses", "environment", "method", "baseline", "baselineVersion", "owner", "approver", "window", "pilot", "riskLevel", "businessImpact", "health", "backup", "dependencies", "rollbackTrigger", "success"];
+    let drafts = { plan: "", snow: "" };
+    let active = "plan";
+
+    function value(id) { return $(id).value.trim(); }
+    function given(id) { return value(id) || "Not provided"; }
+    function rowValue(row, name) { return row.querySelector(`[data-field="${name}"]`).value.trim(); }
+    function rowField(name, label, multiline = false) {
+      const wrap = document.createElement("div");
+      wrap.className = "field" + (multiline ? " full" : "");
+      const text = document.createElement("label");
+      text.textContent = label;
+      const control = document.createElement(multiline ? "textarea" : "input");
+      control.dataset.field = name;
+      if (!multiline) control.maxLength = 240;
+      text.append(control);
+      wrap.append(text);
+      return wrap;
+    }
+    function addFinding() {
+      const row = document.createElement("div");
+      row.className = "finding";
+      const top = document.createElement("div");
+      top.className = "finding-top";
+      const title = document.createElement("span");
+      title.className = "finding-title";
+      title.textContent = `Finding ${$("findings").children.length + 1}`;
+      const remove = document.createElement("button");
+      remove.className = "link-button";
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () => { row.remove(); renumber(); });
+      top.append(title, remove);
+      const grid = document.createElement("div");
+      grid.className = "fields";
+      grid.append(
+        rowField("control", "Control ID / policy setting"),
+        rowField("risk", "Finding priority"),
+        rowField("evidence", "Current state and evidence", true),
+        rowField("action", "Proposed action and target state", true),
+        rowField("validation", "Post-change validation", true),
+        rowField("backout", "Exact backout action", true)
+      );
+      row.append(top, grid);
+      $("findings").append(row);
+    }
+    function renumber() { [...$("findings").children].forEach((row, i) => row.querySelector(".finding-title").textContent = `Finding ${i + 1}`); }
+    function findings() {
+      return [...$("findings").children].map(row => ({
+        control: rowValue(row, "control"), risk: rowValue(row, "risk"), evidence: rowValue(row, "evidence"),
+        action: rowValue(row, "action"), validation: rowValue(row, "validation"), backout: rowValue(row, "backout")
+      })).filter(item => Object.values(item).some(Boolean));
+    }
+    function missing(items) {
+      const gaps = [];
+      for (const [id, label] of [["targets", "affected CIs"], ["role", "server role"], ["environment", "environment"], ["method", "change method"], ["baseline", "baseline source"], ["baselineVersion", "baseline version/reference"], ["approver", "approver or CAB reference"], ["window", "approved change window"], ["pilot", "pilot target"], ["riskLevel", "change risk"], ["businessImpact", "expected business impact"], ["health", "current health checks"], ["backup", "backup or configuration export evidence"], ["dependencies", "dependencies"], ["rollbackTrigger", "backout trigger and decision owner"], ["success", "success criteria"]]) {
+        if (!value(id)) gaps.push(label);
+      }
+      if (!items.length) gaps.push("at least one verified finding");
+      items.forEach((item, i) => {
+        for (const [key, label] of [["control", "control ID"], ["evidence", "current evidence"], ["action", "proposed action"], ["validation", "validation"], ["backout", "backout action"]]) {
+          if (!item[key]) gaps.push(`finding ${i + 1}: ${label}`);
+        }
+      });
+      return gaps;
+    }
+    function numbered(items, key) { return items.length ? items.map((item, i) => `${i + 1}. ${item.control || `Unidentified control ${i + 1}`}: ${item[key] || "Not provided"}`).join("\n") : "No verified findings entered."; }
+    function display() {
+      $("output").textContent = drafts[active] || "No draft generated.";
+      for (const [name, id] of [["plan", "planTab"], ["snow", "snowTab"]]) {
+        $(id).classList.toggle("active", active === name);
+        $(id).setAttribute("aria-selected", String(active === name));
+      }
+    }
+    function generate() {
+      const items = findings();
+      const gaps = missing(items);
+      const readiness = gaps.length ? "DRAFT — NOT READY FOR APPROVAL" : "COMPLETE DRAFT — AWAITING APPROVAL";
+      $("status").textContent = gaps.length ? `${gaps.length} review gaps` : "Complete draft · approval pending";
+      $("status").classList.toggle("ready", !gaps.length);
+      const gapText = gaps.length ? gaps.map(gap => `- ${gap}`).join("\n") : "- No required planning fields are missing. Technical review and formal approval are still required.";
+      const findingText = items.length ? items.map((item, i) => [
+        `### ${i + 1}. ${item.control || "Unidentified control"}`,
+        `Priority: ${item.risk || "Not provided"}`,
+        `Current state / evidence: ${item.evidence || "Not provided"}`,
+        `Proposed action / target: ${item.action || "Not provided"}`,
+        `Validation: ${item.validation || "Not provided"}`,
+        `Backout: ${item.backout || "Not provided"}`
+      ].join("\n")).join("\n\n") : "No verified findings entered.";
+      const roleCheck = value("role") === "Domain Controller"
+        ? "- Before and after the change, verify AD replication, DNS resolution, SYSVOL availability, and representative authentication flows using approved checks."
+        : "- Before and after the change, verify the server's critical services and representative application flows.";
+      const methodCheck = value("method") === "Group Policy"
+        ? "- Review the affected GPO, link scope, filtering, and backup before changing policy. Test on the approved pilot scope before wider rollout."
+        : "- Capture the current settings and use the organization's approved deployment method on the pilot target first.";
+      drafts.plan = [
+        `# ${given("title")} — change plan`, readiness, "",
+        "## Scope", `Affected CIs: ${given("targets")}`, `Server IP addresses: ${given("ipAddresses")}`, `Role: ${given("role")}`, `Environment: ${given("environment")}`, `Method: ${given("method")}`,
+        `Baseline: ${given("baseline")} | ${given("baselineVersion")}`, `Implementation owner: ${given("owner")}`,
+        `Approver / CAB: ${given("approver")}`, `Change window: ${given("window")}`, `Pilot target: ${given("pilot")}`,
+        `Risk: ${given("riskLevel")}`, `Expected business impact: ${given("businessImpact")}`, "",
+        "## Pre-change evidence", `Current health: ${given("health")}`, `Backup / export: ${given("backup")}`, `Dependencies: ${given("dependencies")}`, "",
+        "## Findings and planned actions", findingText, "",
+        "## Implementation sequence", "1. Confirm the approved scope, maintenance window, operator, and communication path.",
+        `2. Confirm backup or export evidence: ${given("backup")}`,
+        `3. Apply the listed control changes to the pilot target only: ${given("pilot")}.`,
+        "4. Record the exact setting changes, timestamps, operator, and any deviations.",
+        "5. Complete the per-control validation below. Expand scope only after pilot review and approval.", methodCheck, "",
+        "## Post-change validation", `Success criteria: ${given("success")}`, roleCheck, numbered(items, "validation"), "",
+        "## Backout plan", `Trigger and decision owner: ${given("rollbackTrigger")}`,
+        "1. Stop further rollout when the backout trigger is met.", "2. Execute the control-specific backout actions in the approved window.",
+        numbered(items, "backout"), "3. Re-run the pre-change health and application checks and document recovery evidence.", "",
+        "## Review gaps", gapText, "",
+        "This document is a planning draft. It does not execute changes or record an approval."
+      ].join("\n");
+      drafts.snow = [
+        "ServiceNow change draft", readiness, "",
+        `Short description: ${given("title")} — ${given("targets")}`,
+        `Affected CIs: ${given("targets")}`, `Server IP addresses: ${given("ipAddresses")}`, `Environment / role: ${given("environment")} / ${given("role")}`,
+        `Assigned to: ${given("owner")}`, `Approver / CAB reference: ${given("approver")}`,
+        `Planned window: ${given("window")}`, `Risk: ${given("riskLevel")}`, `Expected business impact: ${given("businessImpact")}`, "",
+        "Description / reason for change:", `Align the listed Windows Server settings with ${given("baseline")} (${given("baselineVersion")}).`,
+        `Current evidence: ${items.length ? items.map(item => `${item.control || "Unidentified control"}: ${item.evidence || "Not provided"}`).join("; ") : "No verified findings entered."}`, "",
+        "Business impact and dependencies:", given("dependencies"), "",
+        "Implementation plan:", `Pilot: ${given("pilot")}`, numbered(items, "action"), "",
+        "Test plan:", `Pre-change health: ${given("health")}`, `Success criteria: ${given("success")}`, roleCheck, numbered(items, "validation"), "",
+        "Backout plan:", `Trigger / decision owner: ${given("rollbackTrigger")}`, `Backup / export: ${given("backup")}`, numbered(items, "backout"), "",
+        "Unresolved review gaps:", gapText, "",
+        "Draft only. No ServiceNow record has been created."
+      ].join("\n");
+      display();
+    }
+    async function copyDraft() {
+      if (!drafts[active]) return announce("Generate a draft first.");
+      try { await navigator.clipboard.writeText(drafts[active]); announce("Draft copied."); }
+      catch { announce("Clipboard access was blocked. Select and copy the draft text manually."); }
+    }
+    function downloadDraft() {
+      if (!drafts[active]) return announce("Generate a draft first.");
+      const blob = new Blob([drafts[active]], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = active === "plan" ? "windows-server-hardening-change-plan.md" : "servicenow-change-draft.md";
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      announce("Markdown download started.");
+    }
+    function announce(message) { $("notice").textContent = message; }
+    function clearAll() {
+      for (const id of fields) $(id).value = "";
+      $("title").value = "Windows Server 2022 hardening";
+      $("baseline").value = "Microsoft Windows Server 2022 security baseline";
+      $("owner").value = "Dinesh";
+      $("findings").replaceChildren(); addFinding();
+      drafts = { plan: "", snow: "" };
+      $("status").textContent = "No draft generated";
+      $("status").classList.remove("ready");
+      $("output").textContent = "Enter the target, baseline reference, operational safeguards, and verified findings. Then select Generate drafts.";
+      announce("Inputs cleared.");
+    }
+    $("addFinding").addEventListener("click", addFinding);
+    $("generate").addEventListener("click", generate);
+    $("clear").addEventListener("click", clearAll);
+    $("planTab").addEventListener("click", () => { active = "plan"; display(); });
+    $("snowTab").addEventListener("click", () => { active = "snow"; display(); });
+    $("copy").addEventListener("click", copyDraft);
+    $("download").addEventListener("click", downloadDraft);
+    addFinding();
+  </script>
+</body>
+</html>

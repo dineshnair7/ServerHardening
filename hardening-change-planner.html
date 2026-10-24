@@ -45,6 +45,10 @@
     .add { margin-top: 14px; padding: 10px 14px; border: 1px dashed #67a99e; border-radius: 10px; color: #b9efe1; background: #173a3c; font-weight: 700; }
     .add:hover { background: #20504e; }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .cloud-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .cloud-actions select { flex: 1 1 280px; width: auto; }
+    .cloud-status { margin: 14px 0 0; color: #b9d1da; font-size: .86rem; line-height: 1.5; }
+    [hidden] { display: none !important; }
     .primary, .secondary { padding: 12px 17px; border-radius: 11px; font-weight: 750; }
     .primary { border: 1px solid #7fe1be; color: #092022; background: #87e6c4; }
     .primary:hover { background: #b0f5dc; }
@@ -73,13 +77,26 @@
     <div class="shell header-inner">
       <div class="topline"><span class="dot"></span> Dinesh · systems operations</div>
       <h1>Windows Server hardening change planner</h1>
-      <p>Turn verified findings into an implementation plan, a backout plan, and a ServiceNow-ready change draft. This tool works locally in your browser and makes no server changes.</p>
-      <div class="facts"><span class="pill">Windows Server 2022</span><span class="pill">Domain controller aware</span><span class="pill">Review before execution</span><span class="pill">No external dependencies</span></div>
+      <p>Turn verified findings into an implementation plan, a backout plan, and a ServiceNow-ready change draft. Sign in to save and reopen plans. This tool makes no server changes.</p>
+      <div class="facts"><span class="pill">Windows Server 2022</span><span class="pill">Domain controller aware</span><span class="pill">Review before execution</span><span class="pill">Private saved plans</span></div>
     </div>
   </header>
 
   <main class="shell layout">
     <div class="stack">
+      <section class="card" aria-labelledby="account-heading">
+        <div class="section-head"><span class="step">00</span><div><h2 id="account-heading">Your saved plans</h2><p>Sign in to store plans securely and reopen them later. Draft generation still works without an account.</p></div></div>
+        <form id="authForm" class="fields">
+          <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></div>
+          <div class="actions full"><button class="primary" type="submit">Sign in</button><button class="secondary" id="signUp" type="button">Create account</button></div>
+        </form>
+        <div id="cloudAccount" hidden>
+          <p class="muted">Signed in as <strong id="signedInEmail"></strong></p>
+          <div class="cloud-actions"><select id="savedPlans" aria-label="Saved plans"><option value="">Select a saved plan</option></select><button class="secondary" id="loadPlan" type="button">Open</button><button class="primary" id="savePlan" type="button">Save plan</button><button class="secondary" id="newPlan" type="button">New plan</button><button class="secondary" id="signOut" type="button">Sign out</button></div>
+        </div>
+        <p class="cloud-status" id="cloudStatus" role="status" aria-live="polite">Connecting to saved plans…</p>
+      </section>
       <section class="card" aria-labelledby="scope-heading">
         <div class="section-head"><span class="step">01</span><div><h2 id="scope-heading">Scope and ownership</h2><p>Identify the exact targets and the source of the security requirements.</p></div></div>
         <div class="fields">
@@ -296,6 +313,25 @@
       $("output").textContent = "Enter the target, baseline reference, operational safeguards, and verified findings. Then select Generate drafts.";
       announce("Inputs cleared.");
     }
+    window.plannerStorage = {
+      snapshot: () => ({ fields: Object.fromEntries(fields.map(id => [id, value(id)])), findings: findings() }),
+      restore: data => {
+        if (!data || typeof data !== "object") throw new Error("Invalid saved plan.");
+        clearAll();
+        for (const id of fields) if (typeof data.fields?.[id] === "string") $(id).value = data.fields[id];
+        if (Array.isArray(data.findings)) {
+          $("findings").replaceChildren();
+          for (const item of data.findings) {
+            addFinding();
+            const row = $("findings").lastElementChild;
+            for (const key of ["control", "risk", "evidence", "action", "validation", "backout"])
+              if (typeof item?.[key] === "string") row.querySelector(`[data-field="${key}"]`).value = item[key];
+          }
+          if (!data.findings.length) addFinding();
+        }
+      },
+      clear: clearAll
+    };
     $("addFinding").addEventListener("click", addFinding);
     $("generate").addEventListener("click", generate);
     $("clear").addEventListener("click", clearAll);
@@ -305,5 +341,6 @@
     $("download").addEventListener("click", downloadDraft);
     addFinding();
   </script>
+  <script src="cloud.js" defer></script>
 </body>
 </html>

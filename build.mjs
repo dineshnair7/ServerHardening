@@ -12,5 +12,9 @@ await build({
   bundle: true,
   format: 'iife',
   minify: true,
-  target: ['es2020']
+  target: ['es2020'],
+  define: {
+    'process.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL || ''),
+    'process.env.SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.SUPABASE_PUBLISHABLE_KEY || '')
+  }
 });

@@ -5,9 +5,9 @@ A browser-based planner that drafts a change plan and ServiceNow change text fro
 ## Deploy
 
 1. Create a dedicated Supabase project and run the SQL in `supabase/migrations/20261024062942_create_plans.sql`.
-2. Put the project's URL and **publishable** key in `src/supabase-config.js`. Never use a secret or service role key in browser code.
+2. In Vercel Project Settings, set `SUPABASE_URL` to the project's API URL and `SUPABASE_PUBLISHABLE_KEY` to its **publishable** key for Production and Preview. Never use a secret or service role key in browser code.
 3. In Supabase Auth URL Configuration, set the Site URL to the deployed Vercel origin and add the planner page URL as an allowed redirect URL. Email confirmation is enabled by default on hosted projects.
-4. Run `npm ci` and `npm run build`.
+4. Run `npm ci` and `npm run build` for a local build. Set the same environment variables before building locally.
 5. Deploy `dist/` to Vercel, or configure a Vercel project with build command `npm run build` and output directory `dist`.
 
 The database enables row level security. Signed-in users can read and change only their own saved plans. The public site remains usable for drafting without sign-in; only cloud saving requires an account.

@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { supabaseUrl, supabasePublishableKey } from './supabase-config.js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const el = id => document.getElementById(id);
 const status = message => { el('cloudStatus').textContent = message; };
